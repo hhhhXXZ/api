@@ -1,47 +1,31 @@
 const express = require('express'),
 	app = express(),
 	port = 3000,
-	{ promisify } = require('util'),
-	readdir = promisify(require('fs').readdir),
 	cors = require('cors');
 
-module.exports = async bot => {
-	const routes = (await readdir('./src/http/routes')).filter((v, i, a) => a.indexOf(v) === i);
-	const endpoints = [];
-
-	// IP logger
-	app.use(function(req, res, next) {
-		if (req.originalUrl == '/favicon.ico' || !bot.config.debug) return;
-		bot.logger.log(`IP: ${req.connection.remoteAddress.slice(7)} -> ${req.originalUrl}`);
-		next();
-	});
-
-	// Get all routes
-	for (const route of routes) {
-		if (route !== 'index.js') {
-			app.use(`/${route.replace('.js', '')}`, require(`./routes/${route}`)(bot));
-			endpoints.push(`${route.replace('.js', '')}:`, ...(require(`./routes/${route}`)(bot).stack.map(item => `\t ${item.route.path}`).filter((v, i, a) => a.indexOf(v) === i && v !== '/')));
-		}
-	}
-
-	// Create web server
+module.exports = bot => {
 	app
+		// Home page
 		.use(cors())
-		.disable('x-powered-by')
 		.get('/', (req, res) => {
-			res
-				.type('text/plain')
-				.send([
-					`API server for ${bot.user.tag}`,
-					'Endpoints:',
-					endpoints.join('\n'),
-				].join('\n'));
+			res.type('text/plain');
+			res.send(`API server for ${bot.user.username}
+				\n/statistics - For basic statistics of the bot
+				\n/commands - Get full list of commands & categories
+				\n/commands/:commandName - Get information on a specific command
+				\n/guilds/:guilID - Get basic information of that guild
+				\n/guilds/:guildID/members - Get full list of members in guild`);
 		})
+		// Statistics of the bot
+		.use('/statistics', require('./statistics.js')(bot))
+		// Command list
+		.use('/commands', require('./commands.js')(bot))
+		.use('/user', require('./user.js')(bot))
 		// Make sure web scrapers aren't used
+		.use('/guilds', require('./guilds.js')(bot))
 		.get('/robots.txt', function(req, res) {
-			res
-				.type('text/plain')
-				.send('User-agent: *\ndisallow: /');
+			res.type('text/plain');
+			res.send('User-agent: *\nallow: /\n\nUser-agent: *\ndisallow: /dashboard');
 		})
 		.get('*', async function(req, res) {
 			res.send('No data here. Go away!');
