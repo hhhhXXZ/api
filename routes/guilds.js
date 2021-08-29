@@ -7,6 +7,7 @@ const express = require('express'),
 module.exports = function(bot) {
 	// Get basic information on guild
 	router.get('/:guildId', async (req, res) => {
+		if (bot.config.debug) bot.logger.debug(`IP: ${req.connection.remoteAddress.slice(7)} accessed \`/guilds/${req.params.guildId}\`.`);
 
 		// fetch guild's basic information
 		const guild = bot.guilds.cache.get(req.params.guildId);
@@ -21,6 +22,7 @@ module.exports = function(bot) {
 
 	// Get list of members in guild
 	router.get('/:guildId/members', async (req, res) => {
+		if (bot.config.debug) bot.logger.debug(`IP: ${req.connection.remoteAddress.slice(7)} accessed \`/guilds/${req.params.guildId}/members\`.`);
 
 		// fetch member list of guild
 		const guild = bot.guilds.cache.get(req.params.guildId);
@@ -47,8 +49,9 @@ module.exports = function(bot) {
 		res.status(400).json({ error: 'Guild not found!' });
 	});
 
-	// get list of channels (plus ability for TYPE & PERMS filtering)
+	// get list of channels
 	router.get('/:guildId/channels', async (req, res) => {
+		if (bot.config.debug) bot.logger.debug(`IP: ${req.connection.remoteAddress.slice(7)} accessed \`/guilds/${req.params.guildId}/channels\`.`);
 
 		// fetch member list of guild
 		const guild = bot.guilds.cache.get(req.params.guildId);
